@@ -18,7 +18,7 @@
     volumes = [ "/var/run/docker.sock:/var/run/docker.sock" ];
     environment = {
       WATCHTOWER_CLEANUP = "true";
-      WATCHTOWER_POLL_INTERVAL = "300"; # Check every 5 minutes
+      WATCHTOWER_POLL_INTERVAL = "30"; # Check every 30 seconds
     };
   };
 
