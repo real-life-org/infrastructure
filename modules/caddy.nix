@@ -1,8 +1,5 @@
 { config, pkgs, ... }:
 {
-  # Disable NixOS Caddy service — we use caddy-docker-proxy instead
-  services.caddy.enable = false;
-
   # Create caddy network on startup
   systemd.services.docker-network-caddy = {
     description = "Create Docker caddy network";
@@ -16,7 +13,7 @@
   };
 
   # caddy-docker-proxy: Caddy with Docker label-based auto-configuration
-  virtualisation.oci-containers.containers.caddy = {
+  virtualisation.oci-containers.containers.caddy-proxy = {
     image = "lucaslorentz/caddy-docker-proxy:2.9";
     ports = [
       "80:80"
