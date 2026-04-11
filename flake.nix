@@ -9,7 +9,7 @@
     nixosModules = {
       base = import ./modules/base.nix;
       docker = import ./modules/docker.nix;
-      caddy = import ./modules/caddy.nix;
+      traefik = import ./modules/traefik.nix;
     };
 
     nixosConfigurations = {
@@ -20,7 +20,7 @@
           ./hosts/timo/default.nix
           ./modules/base.nix
           ./modules/docker.nix
-          ./modules/caddy.nix
+          ./modules/traefik.nix
         ];
       };
     };
