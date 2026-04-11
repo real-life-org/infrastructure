@@ -1,5 +1,8 @@
 { config, pkgs, ... }:
 {
+  # Use Docker (not Podman) as backend for NixOS-managed containers
+  virtualisation.oci-containers.backend = "docker";
+
   # Docker
   virtualisation.docker = {
     enable = true;
