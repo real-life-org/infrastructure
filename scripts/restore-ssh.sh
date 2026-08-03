@@ -26,7 +26,11 @@ if ! mountpoint -q /mnt; then
 fi
 
 mkdir -p /mnt/root/.ssh
-curl -fsSL https://github.com/antontranelis.keys > /mnt/root/.ssh/authorized_keys
+if command -v curl >/dev/null 2>&1; then
+  curl -fsSL https://github.com/antontranelis.keys > /mnt/root/.ssh/authorized_keys
+else
+  wget -qO /mnt/root/.ssh/authorized_keys https://github.com/antontranelis.keys
+fi
 chmod 700 /mnt/root/.ssh
 chmod 600 /mnt/root/.ssh/authorized_keys
 
