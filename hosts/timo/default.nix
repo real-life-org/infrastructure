@@ -4,7 +4,7 @@
 
   # Admin: Anton (root access via Nitrokey)
   users.users.root.openssh.authorizedKeys.keys = [
-    "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEZCBpqDTUBzarQd9Df/x2KWJMyV2/vsup1DvlcE99hxAAAABHNzaDo= mail@antontranelis.de"
+    "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEOKw84pd96hpzCtWeuf3/2pJZ1Ue9Zq1O8mkVh75kNVAAAABHNzaDo= mail@antontranelis.de"
   ];
 
   # Timo: Docker-Rechte, kein sudo
