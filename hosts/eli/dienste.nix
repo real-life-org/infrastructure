@@ -19,6 +19,9 @@
     wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
 
+    # docker compose braucht das compose-Plugin, nicht nur den Client.
+    path = with pkgs; [ docker docker-compose ];
+
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
@@ -38,10 +41,41 @@
   systemd.services.eli-backup = {
     description = "Elis Backup";
     after = [ "eli-stack.service" ];
+
+    # systemd startet mit einem minimalen PATH, nicht mit dem einer
+    # Anmeldung. Als cron-Job des Nutzers lief das Skript mit dessen
+    # Umgebung; hier muss jedes Programm ausdruecklich dastehen, sonst
+    # bricht der Lauf an der ersten Zeile ab, die eins davon braucht.
+    #
+    # Was das Skript benutzt: docker (Export im Container), sqlite3
+    # (konsistente Kopien), gpg (verschluesseln), tar und gzip (packen),
+    # git (Gedaechtnis-Repo pflegen), openssh (dessen Push), python3
+    # (INDEX.json), dazu die ueblichen Werkzeuge aus coreutils,
+    # findutils und gnugrep.
+    path = with pkgs; [
+      bash
+      docker
+      docker-compose
+      sqlite
+      gnupg
+      gnutar
+      gzip
+      git
+      openssh
+      python3
+      coreutils
+      findutils
+      gnugrep
+      gnused
+    ];
+
     serviceConfig = {
       Type = "oneshot";
       User = "eli";
-      ExecStart = "/home/eli/backup-tool/eli-backup.sh";
+      # Ausdruecklich bash: das Skript nutzt "set -o pipefail", das
+      # die POSIX-Shell nicht kennt. Und /bin/bash gibt es auf NixOS
+      # nicht, der Shebang des Skripts liefe also ins Leere.
+      ExecStart = "${pkgs.bash}/bin/bash /home/eli/backup-tool/eli-backup.sh";
       TimeoutStartSec = "3600";
     };
   };

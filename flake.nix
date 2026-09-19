@@ -9,6 +9,7 @@
     nixosModules = {
       base = import ./modules/base.nix;
       docker = import ./modules/docker.nix;
+      watchtower = import ./modules/watchtower.nix;
       traefik = import ./modules/traefik.nix;
     };
 
@@ -20,6 +21,7 @@
           ./hosts/timo/default.nix
           ./modules/base.nix
           ./modules/docker.nix
+          ./modules/watchtower.nix
           ./modules/traefik.nix
         ];
       };

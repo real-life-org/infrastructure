@@ -16,6 +16,15 @@ Ohne `traefik.nix`: Eli hat ihren eigenen Caddy als Container, mit
 Zertifikaten, die seit Monaten laufen. Auf Traefik umzustellen wäre eine
 zweite Änderung während eines Umzugs.
 
+Ohne `watchtower.nix`: automatische Image-Updates passen zu
+zustandslosen Diensten, nicht zu Elis Bestand. Chroma, Neo4j und der
+Mailserver tragen Daten, deren Format sich zwischen zwei Fassungen
+ändern kann. Ein Beispiel aus dem eigenen Bestand: Chroma 1.0.0 wertet
+die Authentifizierungs-Variablen nicht mehr aus, die früher wirkten —
+der Dienst lief weiter und war sieben Monate ungeschützt, ohne dass
+etwas ausfiel. Watchtower hätte genau so ein Update eingespielt, alle
+30 Sekunden auf der Suche danach.
+
 ## Was hier noch nicht beschrieben ist
 
 **Die zehn Container selbst.** Sie stehen weiter in
@@ -60,11 +69,22 @@ es jemand merkt. Folge: wer hier root braucht, braucht den Stick in der
 Hand, und unbeaufsichtigte Läufe als root gibt es nicht mehr.
 
 **Der `eli`-Nutzer** hat den Nitrokey ebenfalls, behält daneben aber
-vorerst Antons RSA-Schlüssel. Sonst bräuchte jede Verbindung einen
-Fingerabdruck am Stick, auch die von Werkzeugen, die für Eli aufräumen.
-Dieser Schlüssel kommt nicht an das System heran, sondern an Elis
-Arbeitsbereich. Er fällt weg, sobald unbeaufsichtigtes Arbeiten nicht
-mehr gebraucht wird oder es dafür einen eigenen Dienst-Schlüssel gibt.
+vorerst Antons RSA-Schlüssel, damit unbeaufsichtigtes Arbeiten möglich
+bleibt.
+
+**Dieser Schlüssel ist root-äquivalent.** Hier stand zuerst, er komme
+„nicht an das System heran, sondern an Elis Arbeitsbereich" — das war
+falsch. `eli` ist in der `docker`-Gruppe, der Docker-Daemon läuft als
+root, und wer Container starten darf, kann `/` einhängen und ist root.
+
+Die Umstellung auf den Nitrokey härtet also die **direkte**
+Root-Anmeldung. Es gibt weiterhin einen zweiten Weg zu root, und der
+braucht keine Hardware. Die `docker`-Gruppe einfach zu entfernen geht
+nicht: Elis Dienste und ihr Backup brauchen sie.
+
+Ob dieser Schlüssel als benannte, root-äquivalente Ausnahme bleibt oder
+ob die Grenze technisch gezogen wird, hängt an
+[#3](https://github.com/real-life-org/infrastructure/issues/3).
 
 **Offen:** ein Backup-Schlüssel auf beiden Servern. Geht der Nitrokey
 verloren, ist root sonst nur noch über das Rettungssystem des Hosters
@@ -76,7 +96,12 @@ Stand 19.09.2026, mit `nix eval` gegen diese Dateien:
 
 - die Konfiguration wertet aus, Rechnername `eli`
 - Firewall öffnet 22, 25, 80, 143, 443, 465, 587, 993
-- root hat genau einen Schlüssel, den Nitrokey
+- root hat genau einen Schlüssel, den Nitrokey (was den **direkten**
+  Root-Zugang betrifft, siehe oben)
+- Watchtower läuft auf diesem Host **nicht**: `oci-containers.containers`
+  ist leer, während `timo` weiterhin `traefik` und `watchtower` hat
+- die Backup-Unit bekommt bash, docker, sqlite, gnupg, tar, gzip, git,
+  openssh, python3, coreutils, findutils, grep und sed in den PATH
 - der `eli`-Nutzer hat fünf, Timos mit seinem festen Kommando
 - `rrsync` löst auf ein vorhandenes Paket auf (3.4.1)
 - ein vollständiger Build scheitert am Hardware-Platzhalter, wie er soll

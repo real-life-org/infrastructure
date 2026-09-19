@@ -27,16 +27,22 @@
       "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEOKw84pd96hpzCtWeuf3/2pJZ1Ue9Zq1O8mkVh75kNVAAAABHNzaDo= mail@antontranelis.de"
       # Anton, RSA: der Arbeitszugang.
       #
-      # Bleibt vorerst, weil sonst jede Verbindung einen Fingerabdruck
-      # am Stick braucht - auch die von Werkzeugen, die fuer Eli
-      # aufraeumen. Root ist bereits nur noch ueber Hardware erreichbar;
-      # dieser Schluessel kommt also nicht an das System heran, sondern
-      # an Elis Arbeitsbereich.
+      # ACHTUNG, und das stand hier zuerst falsch: dieser Schluessel ist
+      # root-aequivalent. eli ist in der docker-Gruppe, und der
+      # Docker-Daemon laeuft als root. Wer sich damit anmeldet, kann
+      # einen Container mit gemountetem / starten und ist root.
       #
-      # Er faellt weg, sobald unbeaufsichtigtes Arbeiten nicht mehr
-      # gebraucht wird oder es einen eigenen Dienst-Schluessel dafuer
-      # gibt. Bis dahin ist das eine bewusste Ausnahme, keine
-      # vergessene Altlast.
+      # Die Umstellung auf den Nitrokey haertet also die direkte
+      # Root-Anmeldung, nicht den Systemzugang als solchen. Solange
+      # eli in der docker-Gruppe ist, gibt es hier zwei Wege zu root:
+      # einen mit Hardware und einen ohne.
+      #
+      # Die docker-Gruppe einfach zu entfernen geht nicht: Elis
+      # Dienste und ihr Backup brauchen sie. Die Entscheidung, ob
+      # dieser Schluessel als root-aequivalente Ausnahme bleibt oder
+      # ob die Grenze technisch gezogen wird (rootless Betrieb, eigene
+      # Dienstschnittstelle), haengt an
+      # real-life-org/infrastructure#3.
       "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDFmB0XNWDN5WWb2W0T7DyvaQWnYKhFx5pvfJ+Wu2h+bq9Qmb+kX4yrXi/8iUH1JbGoZYGOqBE82DnWGGwL2R+rwPt34Ktplac8WiRGGkcifs3oezJjpD2SNHI3CrWdwx27LiBwHTQE8AX3CT0zAtOV9Vh1wctJ6LHplvH1mzjnhOzyRtoJ6MBwjnaGP3DXNdq/FmSgmibNR7So0/xJJzOVLm9DsG9/4mJrV4u7h/IN2FXAuXRoNWDQUwFODa0Bd6K0ALLqyY2MCRU777hpucxGxXwC53LfdFnhw+tmKFiuOPwJF0qpt6XwAH3A8LaIG59jinz9OMesQkGcMtfAWWmNSDnnHwyXZl3P/g+jFudJdTcQxkddYvisc5kPCSK56MR0pceuOC4d4esF4V2igTVq1/T93uE/AO0NPCVZLYJGyrunvCNPX7WJ6EbcMe6O7wOw3QflKEEg53ssC0N6EhhJSBro4iTfqbZeNfj5mh0+bPdnmZ5tlaH4Im3/VDEHuU5yXQWszWm5gKV3IVIRPLaXHgAzMMID4C7v+VcHCZMBYAZon748Zm2bCNF2Wb3sPA/pp4bknqx09BlVCfM8gMxJrqj2+ugVxPD9cbxa+fyGEpu+PlIJC7AahnOg6O72ywB/xNLscWBhgdvSZxPc0C5f8OiLApB6xcU0ttw/v6W6yQ== mail@antontranelis.de"
       # Eli selbst, fuer ihre eigenen Laeufe
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIeMlCIyZ6dB/Ro51P3n5lJt9Ld3ybqgwpgb3mTMOG4K eli@geist"
