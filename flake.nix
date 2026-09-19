@@ -36,6 +36,7 @@
           ./hosts/eli/hardware-configuration.nix
           ./hosts/eli/default.nix
           ./hosts/eli/dienste.nix
+          ./hosts/eli/netz.nix
           ./modules/base.nix
           ./modules/docker.nix
         ];
