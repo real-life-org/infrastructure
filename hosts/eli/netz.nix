@@ -75,8 +75,17 @@
   # Ubuntu heisst sie ens6; unter NixOS koennte dieselbe Karte anders
   # heissen, und dann greift keine der Regeln oben. Deshalb wird der
   # Name hier an die MAC-Adresse gebunden.
+  #
+  # ACHTUNG: Diese MAC aendert sich bei einer Neuinstallation. Am
+  # 19.09.2026 wurde der Server neu aufgesetzt und bekam eine andere
+  # (vorher 02:01:90:b8:ca:5b). Waere das unbemerkt geblieben, haette
+  # keine der Netzregeln gegriffen und der Server waere nach dem
+  # Neustart nicht mehr erreichbar gewesen.
+  #
+  # Vor jedem Rebuild nach einer Neuinstallation pruefen:
+  #   ip link show ens6 | grep -o "link/ether [0-9a-f:]*"
   systemd.network.links."10-ens6" = {
-    matchConfig.MACAddress = "02:01:90:b8:ca:5b";
+    matchConfig.MACAddress = "02:01:9a:ab:b2:10";
     linkConfig.Name = "ens6";
   };
 }
