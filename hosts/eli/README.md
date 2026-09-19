@@ -39,13 +39,21 @@ Entscheidung, weil davon abhängt, wer an Elis Zugänge kommt.
 
 ## Vor dem Umzug
 
-Die Hardware-Beschreibung ist ein Platzhalter, und das ist Absicht: eine
-geratene Datenträger-Kennung macht den Server unstartbar. Ein
-vollständiger Build scheitert deshalb heute mit
+Die Hardware-Beschreibung stammt seit dem 19.09.2026 von
+`nixos-infect` und wurde danach ergänzt. Was das Werkzeug **nicht**
+erkannt hatte: die eigene Boot-Partition `vda13`, auf der `grub.cfg`
+und die NixOS-Kernel liegen.
 
-    The 'fileSystems' option does not specify your root file system.
+Ohne diesen Eintrag wäre der erste Neustart noch gutgegangen — GRUB
+weiß, wo seine Dateien liegen. Aber der nächste `nixos-rebuild` hätte
+die Kernel nach `/boot` auf der Wurzel geschrieben, während GRUB sie auf
+`vda13` sucht. Dann bootet nichts mehr, und niemand wüsste warum.
 
-Das ist die richtige Antwort, solange der Platzhalter steht.
+**Wer die Datei nach einer Neuinstallation erneuert, prüft mindestens:**
+
+    grep -E " / | /boot" /proc/mounts
+
+Jede dort genannte Partition muss in der Konfiguration stehen.
 
 Ablauf:
 
