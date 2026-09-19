@@ -55,11 +55,49 @@ Ablauf:
    Platzhalter-Datei prüfen, erst dann einchecken
 4. `nixos-rebuild switch --flake github:real-life-org/infrastructure#eli`
 
-Besonderheit gegenüber timo: Elis Adresse hat eine **/32-Maske**, das
-Gateway liegt außerhalb des eigenen Subnetzes und braucht eine eigene
-Route. `nixos-infect` erzeugt die normalerweise richtig — prüfen, bevor
-neu gestartet wird, sonst ist der Server nach dem Neustart nicht
-erreichbar.
+### Das Netz ist ausgeschrieben, nicht geraten
+
+Elis Adresse hat eine **/32-Maske**: rechnerisch liegt nichts außer ihr
+selbst im eigenen Netz, auch das Gateway nicht. Erreichbar wird es erst
+durch eine Link-Route. Fällt die weg, ist der Server nach dem Neustart
+still.
+
+Deshalb steht das Netz in `netz.nix` ausdrücklich da, statt sich auf
+`nixos-infect` oder einen DHCP-Client zu verlassen. Geprüft wurde nicht,
+ob die Optionen gesetzt sind, sondern welche Befehle daraus entstehen:
+
+    ip route replace 82.165.138.1 dev ens6  proto static
+    ip route replace default  via "82.165.138.1"  dev ens6 proto static
+    ip -6 route replace fe80::1 dev ens6  proto static
+    ip -6 route replace default  via "fe80::1"  dev ens6 proto static
+    ip addr replace "82.165.138.182/32" dev "ens6"
+    ip addr replace "2a02:2479:a1:c200::1/128" dev "ens6"
+
+Das ist genau das, was Ubuntu heute per DHCP erzeugt.
+
+Die zweite Stolperstelle ist der Name der Schnittstelle: unter Ubuntu
+heißt sie `ens6`, unter NixOS könnte dieselbe Karte anders heißen, und
+dann greift keine dieser Regeln. Der Name ist deshalb an die
+MAC-Adresse `02:01:90:b8:ca:5b` gebunden.
+
+### Die Werte zum Abtippen
+
+Falls doch etwas schiefgeht und im Rettungssystem von Hand
+konfiguriert werden muss:
+
+| | |
+|---|---|
+| Schnittstelle | `ens6`, MAC `02:01:90:b8:ca:5b` |
+| IPv4 | `82.165.138.182/32` |
+| Gateway | `82.165.138.1` (on-link!) |
+| IPv6 | `2a02:2479:a1:c200::1/128` |
+| Gateway v6 | `fe80::1` |
+| DNS | `212.227.123.16`, `212.227.123.17` |
+
+    ip addr add 82.165.138.182/32 dev ens6
+    ip link set ens6 up
+    ip route add 82.165.138.1 dev ens6
+    ip route add default via 82.165.138.1 dev ens6
 
 ## Zugänge
 
