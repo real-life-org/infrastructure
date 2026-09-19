@@ -78,7 +78,20 @@ Das ist genau das, was Ubuntu heute per DHCP erzeugt.
 Die zweite Stolperstelle ist der Name der Schnittstelle: unter Ubuntu
 heißt sie `ens6`, unter NixOS könnte dieselbe Karte anders heißen, und
 dann greift keine dieser Regeln. Der Name ist deshalb an die
-MAC-Adresse `02:01:90:b8:ca:5b` gebunden.
+MAC-Adresse gebunden.
+
+**Diese MAC ändert sich bei einer Neuinstallation.** Am 19.09.2026 wurde
+der Server neu aufgesetzt und bekam `02:01:9a:ab:b2:10` statt bisher
+`02:01:90:b8:ca:5b`. Wäre das unbemerkt geblieben, hätte keine der
+Netzregeln gegriffen. Vor jedem Rebuild nach einer Neuinstallation:
+
+    ip link show ens6 | grep -o "link/ether [0-9a-f:]*"
+
+Dasselbe gilt für alles andere in diesem Dokument, was aus dem alten
+System abgelesen wurde: **Werte, die aus einem System stammen, das es
+nicht mehr gibt, sind Vermutungen.** Beim Neuaufbau am 19.09.2026 hatten
+sich außerdem der Boot-Modus (BIOS → UEFI) und das Partitionslayout
+geändert.
 
 ### Der Rückweg
 
@@ -99,7 +112,7 @@ konfiguriert werden muss:
 
 | | |
 |---|---|
-| Schnittstelle | `ens6`, MAC `02:01:90:b8:ca:5b` |
+| Schnittstelle | `ens6`, MAC `02:01:9a:ab:b2:10` |
 | IPv4 | `82.165.138.182/32` |
 | Gateway | `82.165.138.1` (on-link!) |
 | IPv6 | `2a02:2479:a1:c200::1/128` |
