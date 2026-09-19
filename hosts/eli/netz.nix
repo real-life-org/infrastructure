@@ -61,6 +61,16 @@
     ];
   };
 
+  # Die serielle Konsole. Unter Ubuntu steht "console=tty1 console=ttyS0"
+  # im Kernel-Kommando, und daran haengt der einzige Rueckweg: wenn der
+  # Server nach einem Neustart nicht mehr ins Netz kommt, ist die
+  # Fernkonsole des Hosters die letzte Verbindung. Ohne diese Zeile
+  # bleibt sie schwarz, und dann hilft nur noch ein Rettungssystem.
+  #
+  # Die Reihenfolge ist nicht beliebig: die zuletzt genannte Konsole
+  # wird /dev/console. Deshalb genau wie unter Ubuntu.
+  boot.kernelParams = [ "console=tty1" "console=ttyS0" ];
+
   # Der Name der Schnittstelle ist die zweite Stolperstelle. Unter
   # Ubuntu heisst sie ens6; unter NixOS koennte dieselbe Karte anders
   # heissen, und dann greift keine der Regeln oben. Deshalb wird der

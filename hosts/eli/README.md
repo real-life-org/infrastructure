@@ -80,6 +80,18 @@ heißt sie `ens6`, unter NixOS könnte dieselbe Karte anders heißen, und
 dann greift keine dieser Regeln. Der Name ist deshalb an die
 MAC-Adresse `02:01:90:b8:ca:5b` gebunden.
 
+### Der Rückweg
+
+Wenn der Server nach einem Neustart still bleibt, ist die **serielle
+Konsole** die letzte Verbindung. Unter Ubuntu steht `console=tty1
+console=ttyS0` im Kernel-Kommando; in `netz.nix` steht es genauso, sonst
+bliebe die Fernkonsole des Hosters schwarz.
+
+Der Server läuft unter QEMU bei IONOS. Wie man dort an die Fernkonsole
+kommt, **muss vor dem Umzug einmal ausprobiert worden sein** — nicht
+erst, wenn man sie braucht. Ein Rückweg, den niemand gegangen ist, ist
+eine Vermutung.
+
 ### Die Werte zum Abtippen
 
 Falls doch etwas schiefgeht und im Rettungssystem von Hand
