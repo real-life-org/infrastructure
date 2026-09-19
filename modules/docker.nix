@@ -12,18 +12,9 @@
     };
   };
 
-  # Watchtower — auto-pull new images and restart containers
-  virtualisation.oci-containers.containers.watchtower = {
-    image = "containrrr/watchtower";
-    volumes = [
-      "/var/run/docker.sock:/var/run/docker.sock"
-      "/root/.docker/config.json:/config.json"
-    ];
-    environment = {
-      WATCHTOWER_CLEANUP = "true";
-      WATCHTOWER_POLL_INTERVAL = "30"; # Check every 30 seconds
-    };
-  };
+  # Automatische Image-Updates liegen in modules/watchtower.nix.
+  # Getrennt, weil sie nicht zu jedem Host passen: bei
+  # zustandsbehafteten Diensten koennen sie Daten kosten.
 
   # Docker compose
   environment.systemPackages = with pkgs; [

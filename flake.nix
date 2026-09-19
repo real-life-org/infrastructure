@@ -9,6 +9,7 @@
     nixosModules = {
       base = import ./modules/base.nix;
       docker = import ./modules/docker.nix;
+      watchtower = import ./modules/watchtower.nix;
       traefik = import ./modules/traefik.nix;
     };
 
@@ -20,7 +21,23 @@
           ./hosts/timo/default.nix
           ./modules/base.nix
           ./modules/docker.nix
+          ./modules/watchtower.nix
           ./modules/traefik.nix
+        ];
+      };
+
+      # Elis eigener Server. Ohne traefik.nix: Eli hat ihren eigenen
+      # Caddy als Container, mit Zertifikaten, die seit Monaten laufen.
+      # Auf Traefik umzustellen waere eine zweite Aenderung waehrend
+      # eines Umzugs; das kommt spaeter, wenn ueberhaupt.
+      eli = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          ./hosts/eli/hardware-configuration.nix
+          ./hosts/eli/default.nix
+          ./hosts/eli/dienste.nix
+          ./modules/base.nix
+          ./modules/docker.nix
         ];
       };
     };
