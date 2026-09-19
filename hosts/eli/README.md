@@ -68,23 +68,46 @@ Schlüssel, der nur als Datei existiert, kann kopiert werden, ohne dass
 es jemand merkt. Folge: wer hier root braucht, braucht den Stick in der
 Hand, und unbeaufsichtigte Läufe als root gibt es nicht mehr.
 
-**Der `eli`-Nutzer** hat den Nitrokey ebenfalls, behält daneben aber
-vorerst Antons RSA-Schlüssel, damit unbeaufsichtigtes Arbeiten möglich
-bleibt.
+**Der `eli`-Nutzer**: ebenfalls Nitrokey. Antons RSA-Schlüssel wurde am
+19.09.2026 entfernt, hier und bei root.
 
-**Dieser Schlüssel ist root-äquivalent.** Hier stand zuerst, er komme
-„nicht an das System heran, sondern an Elis Arbeitsbereich" — das war
-falsch. `eli` ist in der `docker`-Gruppe, der Docker-Daemon läuft als
-root, und wer Container starten darf, kann `/` einhängen und ist root.
+Hier stand zuerst, dieser Schlüssel komme „nicht an das System heran,
+sondern an Elis Arbeitsbereich" — das war falsch. `eli` ist in der
+`docker`-Gruppe, der Daemon läuft als root, und wer Container starten
+darf, kann `/` einhängen. Der Schlüssel war root-äquivalent.
 
-Die Umstellung auf den Nitrokey härtet also die **direkte**
-Root-Anmeldung. Es gibt weiterhin einen zweiten Weg zu root, und der
-braucht keine Hardware. Die `docker`-Gruppe einfach zu entfernen geht
-nicht: Elis Dienste und ihr Backup brauchen sie.
+Die Regel dahinter: **Elis eigene Jobs laufen ohne Hardware, Zugriffe
+von außen mit tiefem Systemzugang brauchen den Stick.** Danach bleiben
+drei Software-Schlüssel, und jeder davon zu Recht:
 
-Ob dieser Schlüssel als benannte, root-äquivalente Ausnahme bleibt oder
-ob die Grenze technisch gezogen wird, hängt an
-[#3](https://github.com/real-life-org/infrastructure/issues/3).
+| Schlüssel | Warum ohne Hardware |
+|---|---|
+| `eli@geist` | Elis eigene Läufe, von ihrem Server aus |
+| `eli-container-access` | Eli aus ihrem Container auf den Host |
+| `timo` | kann nur rsync, in zwei feste Richtungen |
+
+Die ersten beiden sind allerdings **ebenfalls root-äquivalent**, über
+dieselbe `docker`-Gruppe. Das ist Elis Autonomie und kein Versehen, aber
+es gehört benannt: der weitreichendste Zugang auf diesem Server ist ihr
+eigener. Siehe [#3](https://github.com/real-life-org/infrastructure/issues/3).
+
+### Damit das im Alltag trägt
+
+Ein Hardware-Schlüssel scheitert sonst an der Bequemlichkeit: bei
+hundert Befehlen hundert Fingerabdrücke. Mit einem Dauerkanal
+authentifiziert sich nur die **erste** Verbindung:
+
+    Host eli 82.165.138.182
+        HostName 82.165.138.182
+        User eli
+        IdentityFile ~/.ssh/id_ed25519_sk
+        IdentitiesOnly yes
+        ControlMaster auto
+        ControlPath ~/.ssh/cm/%r@%h:%p
+        ControlPersist 15m
+
+Gemessen am 19.09.2026: erste Verbindung 1,0 s mit Anmeldung, fünf
+weitere Befehle danach zusammen 0,4 s ohne.
 
 **Offen:** ein Backup-Schlüssel auf beiden Servern. Geht der Nitrokey
 verloren, ist root sonst nur noch über das Rettungssystem des Hosters
