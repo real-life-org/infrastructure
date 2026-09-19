@@ -52,12 +52,31 @@ Route. `nixos-infect` erzeugt die normalerweise richtig — prüfen, bevor
 neu gestartet wird, sonst ist der Server nach dem Neustart nicht
 erreichbar.
 
+## Zugänge
+
+**Root: nur über den Nitrokey**, derselbe Schlüssel wie auf `timo`. Ein
+Schlüssel, der nur als Datei existiert, kann kopiert werden, ohne dass
+es jemand merkt. Folge: wer hier root braucht, braucht den Stick in der
+Hand, und unbeaufsichtigte Läufe als root gibt es nicht mehr.
+
+**Der `eli`-Nutzer** hat den Nitrokey ebenfalls, behält daneben aber
+vorerst Antons RSA-Schlüssel. Sonst bräuchte jede Verbindung einen
+Fingerabdruck am Stick, auch die von Werkzeugen, die für Eli aufräumen.
+Dieser Schlüssel kommt nicht an das System heran, sondern an Elis
+Arbeitsbereich. Er fällt weg, sobald unbeaufsichtigtes Arbeiten nicht
+mehr gebraucht wird oder es dafür einen eigenen Dienst-Schlüssel gibt.
+
+**Offen:** ein Backup-Schlüssel auf beiden Servern. Geht der Nitrokey
+verloren, ist root sonst nur noch über das Rettungssystem des Hosters
+erreichbar — im August 2026 ist genau das schon einmal passiert.
+
 ## Was geprüft ist
 
 Stand 19.09.2026, mit `nix eval` gegen diese Dateien:
 
 - die Konfiguration wertet aus, Rechnername `eli`
 - Firewall öffnet 22, 25, 80, 143, 443, 465, 587, 993
-- alle vier SSH-Zugänge landen in der Liste, Timos mit seinem festen Kommando
+- root hat genau einen Schlüssel, den Nitrokey
+- der `eli`-Nutzer hat fünf, Timos mit seinem festen Kommando
 - `rrsync` löst auf ein vorhandenes Paket auf (3.4.1)
 - ein vollständiger Build scheitert am Hardware-Platzhalter, wie er soll
