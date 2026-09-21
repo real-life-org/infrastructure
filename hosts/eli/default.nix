@@ -42,6 +42,22 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBC3LA000uCa9vbu4zK4k+VfH4N+0lpYI4w4I/TwyfAJ eli-container-access"
       # Timo: nur rsync, zwei feste Richtungen, siehe rsync-timo.sh
       "command=\"/etc/ssh/rsync-timo.sh\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICsttgnEFLbNmin2V2TJ9Va9aleBwKTC226W76r2vSbD timo"
+      # Antons Session-Sync, dasselbe Muster. Ein Schluessel ohne
+      # Beruehrungszwang, weil ein Timer keinen Finger hat.
+      #
+      # Bis zum 21.09.2026 lief sync-to-eli.sh ueber Antons Nitrokey. Alle
+      # 15 Minuten, 116 Projektordner, je ein eigenes ssh - und jedes
+      # wollte eine Beruehrung. 175 Anfragen in sieben Tagen, keine
+      # beantwortet, kein Byte uebertragen. Automatisierung und
+      # Anwesenheitspflicht schliessen einander aus; der Hardwareschluessel
+      # bleibt fuer root und fuer Zugriffe, die tief ins System reichen.
+      "command=\"/etc/ssh/rsync-anton.sh\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH/v/HVgj7HLWdLtg6AbSMda+4UrBjDYAr+G0gVxbBRh anton-session-sync"
+      # Und einer fuer die Codex-Sitzungen. Zwei Schluessel statt einem
+      # mit weiterem Wurzelverzeichnis: ein Schluessel auf
+      # /home/eli/geist/archive duerfte auch in Timos Verzeichnis
+      # schreiben. Diese Grenze ist der Grund, warum es die Wrapper
+      # ueberhaupt gibt.
+      "command=\"/etc/ssh/rsync-codex.sh\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID0BtWdgxZpt9zakBfEpZuVXfMABYtnfxMphTIfskrmY anton-codex-sync"
     ];
   };
 
@@ -68,6 +84,60 @@
               echo "Nur rsync erlaubt."
               echo "  Backups holen:    rsync -av eli@<host>:/ ./eli-backups/"
               echo "  Sessions senden:  rsync -av ./sessions/ eli@<host>:"
+              exit 1
+              ;;
+      esac
+    '';
+  };
+
+  # Antons Wrapper. Dieselben zwei Richtungen wie bei Timo, nur ein
+  # anderes Zielverzeichnis:
+  #
+  #   Pull  Backups holen aus /home/eli/offsite             (nur lesen)
+  #   Push  Sessions ins Archiv /home/eli/geist/archive/anton (nur schreiben)
+  #
+  # Bewusst eine zweite Datei statt eines gemeinsamen, parametrisierten
+  # Wrappers: Timos Zugang war fuenf Monate lang kaputt und ist erst am
+  # 20.09.2026 wieder geprueft worden. Ihn anzufassen, waehrend er
+  # nachweislich traegt, waere das falsche Risiko. Wer die beiden das
+  # naechste Mal ohnehin anfasst, sollte sie zu einem Wrapper mit
+  # Nutzerargument zusammenlegen.
+  environment.etc."ssh/rsync-anton.sh" = {
+    mode = "0755";
+    text = ''
+      #!/bin/sh
+      case "$SSH_ORIGINAL_COMMAND" in
+          "rsync --server --sender "*)
+              exec ${pkgs.rrsync}/bin/rrsync -ro /home/eli/offsite
+              ;;
+          "rsync --server "*)
+              exec ${pkgs.rrsync}/bin/rrsync -wo /home/eli/geist/archive/anton
+              ;;
+          *)
+              echo "Nur rsync erlaubt."
+              echo "  Backups holen:    rsync -av eli@<host>:/ ./eli-backups/"
+              echo "  Sessions senden:  rsync -av ./sessions/ eli@<host>:"
+              exit 1
+              ;;
+      esac
+    '';
+  };
+
+  # Die Codex-Sitzungen kommen vom selben Rechner, gehoeren im Archiv
+  # aber in ein eigenes Verzeichnis - serve.py fuehrt anton, timo und
+  # codex als getrennte Nutzer. Nur schreiben, kein Lesen: Backups holt
+  # der anton-Schluessel.
+  environment.etc."ssh/rsync-codex.sh" = {
+    mode = "0755";
+    text = ''
+      #!/bin/sh
+      case "$SSH_ORIGINAL_COMMAND" in
+          "rsync --server "*)
+              exec ${pkgs.rrsync}/bin/rrsync -wo /home/eli/geist/archive/codex
+              ;;
+          *)
+              echo "Nur rsync zum Senden erlaubt."
+              echo "  rsync -av ./sessions/ eli@<host>:"
               exit 1
               ;;
       esac
