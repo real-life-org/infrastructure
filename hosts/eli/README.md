@@ -10,7 +10,8 @@ kann, ohne dass jemand sich erst auf dem Server umsehen muss.
 |---|---|
 | `default.nix` | Rechnername, alle SSH-Zugänge, Timos eingeschränkter Wrapper |
 | `dienste.nix` | Start des Container-Stapels, tägliches Backup, Mail-Ports |
-| `hardware-configuration.nix` | **Platzhalter**, siehe unten |
+| `hardware-configuration.nix` | Platten, Boot-Partition, seit 19.09.2026 vom echten System |
+| `etc-nixos/configuration.nix` | wird `/etc/nixos/configuration.nix`: bricht ab und nennt den Flake-Befehl |
 
 Ohne `traefik.nix`: Eli hat ihren eigenen Caddy als Container, mit
 Zertifikaten, die seit Monaten laufen. Auf Traefik umzustellen wäre eine
@@ -131,6 +132,81 @@ konfiguriert werden muss:
     ip link set ens6 up
     ip route add 82.165.138.1 dev ens6
     ip route add default via 82.165.138.1 dev ens6
+
+## Ausrollen
+
+Der Server wird aus diesem Repo gebaut, nur so:
+
+    nixos-rebuild switch --flake github:real-life-org/infrastructure#eli
+
+Seit dem 21.09.2026 ist `/etc/nixos/configuration.nix` auf dem Server
+ein Abbruch mit genau diesem Hinweis. Ein `nixos-rebuild switch` ohne
+`--flake` baut aus dieser Datei (`NIX_PATH` enthält
+`nixos-config=/etc/nixos/configuration.nix`) und endet mit dem Befehl
+oben statt mit einem falschen System.
+
+### Warum das nötig war
+
+`nixos-infect` hinterließ am 19.09.2026 in `/etc/nixos/` seine eigene
+Beschreibung des Servers: Rechnername `ubuntu`, `stateVersion = "23.11"`,
+und Antons alter RSA-Schlüssel für root — derselbe, der am selben Tag
+als root-äquivalent entfernt wurde. Die lief nie, aber sie lag da. Ein
+`nixos-rebuild switch` ohne `--flake` hätte daraus gebaut: Rechnername
+zurück, alter Schlüssel wieder frei, Elis Nutzer weg, Timos Zugang weg,
+alle Dienste weg.
+
+### Warum kein Wrapper-Flake
+
+Naheliegend wäre ein `/etc/nixos/flake.nix`, das nur dieses Repo nennt;
+`nixos-rebuild` würde ihm folgen. Aber ein Flake braucht eine
+`flake.lock`, und die läge im Nix-Store, wo nichts geschrieben werden
+kann: `nixos-rebuild switch` scheitert mit `Permission denied`
+(Review zu infrastructure#8, lokal reproduziert). Eine eingecheckte
+Lock-Datei pinnt zwangsläufig einen **älteren** Stand desselben Repos;
+der schlichte Befehl würde dann still dorthin zurückbauen. Ein Abbruch
+mit Hinweis ist ehrlicher als ein Erfolg, der etwas anderes baut.
+
+### Der nächtliche Lauf
+
+`base.nix` schaltet `system.autoUpgrade` ein, täglich 04:40. Ohne
+`flake` ruft der Dienst `nixos-rebuild switch --upgrade` auf, also den
+Weg über `/etc/nixos`. **Seit dem 19.09.2026 war das jede Nacht ein
+Bauversuch aus der `nixos-infect`-Altlast.** Dass der Server noch
+steht, heißt nur, dass diese Läufe gescheitert sind; nachsehen:
+
+    journalctl -u nixos-upgrade --since 2026-09-19 --no-pager | tail -40
+
+Seit diesem Stand steht für Eli `system.autoUpgrade.flake` auf dem
+Repo. Der nächtliche Lauf baut damit dasselbe wie der Befehl von Hand.
+Folge, bewusst: **was auf `main` liegt, ist am nächsten Morgen auf dem
+Server.** Ein Merge in dieses Repo ist ein Deploy. Wer das nicht will,
+schaltet den Dienst für Eli ab und schreibt dazu, warum.
+
+Dieselbe Frage stellt sich für `timo`: dort gilt `base.nix` ebenso, und
+was in seinem `/etc/nixos` liegt, ist nicht aufgeschrieben.
+
+### Aufräumen, einmalig, als root
+
+Die neue `configuration.nix` ersetzt die alte beim nächsten Rebuild von
+selbst (Symlink, per `rename` über die bestehende Datei). Die übrigen
+Reste von `nixos-infect` (`hardware-configuration.nix`, ggf.
+`networking.nix`) bleiben liegen; gebaut wird aus ihnen nicht mehr, aber
+sie verwirren. Weg damit:
+
+    ls -la /etc/nixos                       # ansehen, was da liegt
+    mkdir -p /root/etc-nixos-infect-2026-09-19
+    mv /etc/nixos/*.nix.bak /etc/nixos/hardware-configuration.nix \
+       /etc/nixos/networking.nix /root/etc-nixos-infect-2026-09-19/ 2>/dev/null
+    ls -la /etc/nixos                       # nur noch configuration.nix -> /etc/static/...
+
+Danach prüfen, nicht glauben:
+
+    readlink -f /etc/nixos/configuration.nix   # muss in /nix/store zeigen
+    nixos-rebuild dry-build                    # ohne --flake: muss mit dem Hinweis abbrechen
+    cat /etc/ssh/authorized_keys.d/root        # nur der Nitrokey, kein ssh-rsa
+
+Das beiseitegelegte Verzeichnis kann weg, sobald das geprüft ist. Es
+enthält nichts, was nicht auch hier im Repo steht.
 
 ## Zugänge
 

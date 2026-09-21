@@ -144,5 +144,28 @@
     '';
   };
 
+  # /etc/nixos/configuration.nix bricht mit dem richtigen Befehl ab.
+  # Vorher lag dort die nixos-infect-Ausgabe vom 19.09.2026, und ein
+  # schlichtes `nixos-rebuild switch` haette daraus gebaut. Warum kein
+  # Wrapper-Flake: siehe etc-nixos/configuration.nix.
+  #
+  # Die Datei ersetzt die alte beim naechsten Rebuild (rename ueber die
+  # bestehende Datei). Die uebrigen Reste von nixos-infect bleiben
+  # liegen, bis sie von Hand weggeraeumt sind, siehe README; gebaut wird
+  # aus ihnen nicht mehr, weil configuration.nix sie nicht importiert.
+  environment.etc."nixos/configuration.nix".source = ./etc-nixos/configuration.nix;
+
+  # Der naechtliche Upgrade-Dienst aus base.nix rief bisher
+  # `nixos-rebuild switch --upgrade` ohne --flake auf: seit dem 19.09.2026
+  # jede Nacht um 04:40 ein Bauversuch aus der nixos-infect-Altlast. Dass
+  # der Server noch steht, heisst nur, dass diese Laeufe gescheitert
+  # sind. Mit dem Abbruch oben liefe er weiter jede Nacht in den Fehler.
+  #
+  # Jetzt baut er dasselbe wie der Befehl von Hand. Folge, bewusst: was
+  # auf main liegt, ist am naechsten Morgen auf dem Server. Wer das nicht
+  # will, schaltet hier `system.autoUpgrade.enable = false` und schreibt
+  # dazu, warum.
+  system.autoUpgrade.flake = "github:real-life-org/infrastructure#eli";
+
   system.stateVersion = "24.11";
 }
