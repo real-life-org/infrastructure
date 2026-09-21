@@ -174,8 +174,10 @@ mit Hinweis ist ehrlicher als ein Erfolg, der etwas anderes baut.
 
 `base.nix` schaltet `system.autoUpgrade` ein, täglich 04:40, seit dem
 21.09.2026 mit `flake` auf dieses Repo. **Ein Merge in dieses Repo ist
-damit ein Deploy, am nächsten Morgen.** Wer das nicht will, schaltet den
-Dienst für Eli ab und schreibt dazu, warum.
+damit ein Deploy, am nächsten Morgen.** Wer das nicht will, setzt in
+`default.nix` `system.autoUpgrade.enable = lib.mkForce false` und
+schreibt dazu, warum. Ohne `mkForce` steht es gegen das `true` in
+`base.nix`, und die Auswertung bricht mit einem Konflikt ab.
 
 Vorher lief der Dienst ohne `flake` und scheiterte jede Nacht an
 `nixos-config`, auf Eli seit der Installation, auf `timo` seit

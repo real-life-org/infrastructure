@@ -52,7 +52,8 @@
   #
   # 1. Ein Merge in dieses Repo ist ein Deploy auf jeden Host, am
   #    naechsten Morgen. Wer das fuer einen Host nicht will, setzt dort
-  #    `system.autoUpgrade.enable = false` und schreibt dazu, warum.
+  #    `system.autoUpgrade.enable = lib.mkForce false` und schreibt dazu,
+  #    warum. Ohne mkForce stuende es gegen das `true` hier: Konflikt.
   #
   # 2. Sicherheitsupdates kommen NUR, wenn jemand flake.lock hebt.
   #    nixpkgs ist gepinnt; `--refresh` holt den aktuellen Stand des
