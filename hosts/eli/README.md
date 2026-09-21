@@ -139,21 +139,25 @@ Der Server wird aus diesem Repo gebaut, nur so:
 
     nixos-rebuild switch --flake github:real-life-org/infrastructure#eli
 
-Seit dem 21.09.2026 ist `/etc/nixos/configuration.nix` auf dem Server
-ein Abbruch mit genau diesem Hinweis. Ein `nixos-rebuild switch` ohne
-`--flake` baut aus dieser Datei (`NIX_PATH` enthält
-`nixos-config=/etc/nixos/configuration.nix`) und endet mit dem Befehl
-oben statt mit einem falschen System.
+Ohne `--flake` scheitert `nixos-rebuild` auf diesem Server mit
+`file 'nixos-config' was not found`: ein aus dem Flake gebautes System
+hat kein `nixos-config` im `NIX_PATH` (nixpkgs,
+`misc/nixpkgs-flake.nix`). Das ist ein Abbruch, kein falsches System.
 
-### Warum das nötig war
+### Was in `/etc/nixos` liegt, und warum es egal sein muss
 
 `nixos-infect` hinterließ am 19.09.2026 in `/etc/nixos/` seine eigene
 Beschreibung des Servers: Rechnername `ubuntu`, `stateVersion = "23.11"`,
 und Antons alter RSA-Schlüssel für root — derselbe, der am selben Tag
-als root-äquivalent entfernt wurde. Die lief nie, aber sie lag da. Ein
-`nixos-rebuild switch` ohne `--flake` hätte daraus gebaut: Rechnername
-zurück, alter Schlüssel wieder frei, Elis Nutzer weg, Timos Zugang weg,
-alle Dienste weg.
+als root-äquivalent entfernt wurde. Über den normalen Weg ist sie nicht
+erreichbar (siehe oben), wohl aber über
+`-I nixos-config=/etc/nixos/configuration.nix` oder wenn jemand die
+Dateien dort für die Wahrheit hält.
+
+Deshalb ersetzt `etc-nixos/configuration.nix` die Datei durch einen
+Abbruch mit dem richtigen Befehl. Hier stand zuerst, der normale Weg
+führe über diese Datei; das war falsch und wurde am 21.09.2026 auf
+beiden Servern nachgeprüft.
 
 ### Warum kein Wrapper-Flake
 
@@ -168,41 +172,41 @@ mit Hinweis ist ehrlicher als ein Erfolg, der etwas anderes baut.
 
 ### Der nächtliche Lauf
 
-`base.nix` schaltet `system.autoUpgrade` ein, täglich 04:40. Ohne
-`flake` ruft der Dienst `nixos-rebuild switch --upgrade` auf, also den
-Weg über `/etc/nixos`. **Seit dem 19.09.2026 war das jede Nacht ein
-Bauversuch aus der `nixos-infect`-Altlast.** Dass der Server noch
-steht, heißt nur, dass diese Läufe gescheitert sind; nachsehen:
+`base.nix` schaltet `system.autoUpgrade` ein, täglich 04:40, seit dem
+21.09.2026 mit `flake` auf dieses Repo. **Ein Merge in dieses Repo ist
+damit ein Deploy, am nächsten Morgen.** Wer das nicht will, schaltet den
+Dienst für Eli ab und schreibt dazu, warum.
 
-    journalctl -u nixos-upgrade --since 2026-09-19 --no-pager | tail -40
+Vorher lief der Dienst ohne `flake` und scheiterte jede Nacht an
+`nixos-config`, auf Eli seit der Installation, auf `timo` seit
+mindestens Juni 2026. Es gab nie ein automatisches Update. Nachsehen:
 
-Seit diesem Stand steht für Eli `system.autoUpgrade.flake` auf dem
-Repo. Der nächtliche Lauf baut damit dasselbe wie der Befehl von Hand.
-Folge, bewusst: **was auf `main` liegt, ist am nächsten Morgen auf dem
-Server.** Ein Merge in dieses Repo ist ein Deploy. Wer das nicht will,
-schaltet den Dienst für Eli ab und schreibt dazu, warum.
+    journalctl -u nixos-upgrade --no-pager | grep -c "Failed to start"
 
-Dieselbe Frage stellt sich für `timo`: dort gilt `base.nix` ebenso, und
-was in seinem `/etc/nixos` liegt, ist nicht aufgeschrieben.
+**Sicherheitsupdates kommen auch jetzt nur, wenn jemand `flake.lock`
+hebt.** nixpkgs ist gepinnt; der nächtliche Lauf holt den Stand des
+Repos, nicht den von nixpkgs.
 
 ### Aufräumen, einmalig, als root
 
 Die neue `configuration.nix` ersetzt die alte beim nächsten Rebuild von
 selbst (Symlink, per `rename` über die bestehende Datei). Die übrigen
-Reste von `nixos-infect` (`hardware-configuration.nix`, ggf.
-`networking.nix`) bleiben liegen; gebaut wird aus ihnen nicht mehr, aber
-sie verwirren. Weg damit:
+Reste von `nixos-infect` (`hardware-configuration.nix`,
+`networking.nix`) bleiben liegen; gebaut wird aus ihnen nicht, aber sie
+verwirren. Weg damit:
 
     ls -la /etc/nixos                       # ansehen, was da liegt
     mkdir -p /root/etc-nixos-infect-2026-09-19
-    mv /etc/nixos/*.nix.bak /etc/nixos/hardware-configuration.nix \
-       /etc/nixos/networking.nix /root/etc-nixos-infect-2026-09-19/ 2>/dev/null
+    mv /etc/nixos/hardware-configuration.nix /etc/nixos/networking.nix \
+       /root/etc-nixos-infect-2026-09-19/
     ls -la /etc/nixos                       # nur noch configuration.nix -> /etc/static/...
 
 Danach prüfen, nicht glauben:
 
     readlink -f /etc/nixos/configuration.nix   # muss in /nix/store zeigen
-    nixos-rebuild dry-build                    # ohne --flake: muss mit dem Hinweis abbrechen
+    nixos-rebuild dry-build                    # ohne --flake: "nixos-config was not found"
+    nixos-rebuild dry-build -I nixos-config=/etc/nixos/configuration.nix   # der Hinweis
+    systemctl cat nixos-upgrade | grep -- --flake
     cat /etc/ssh/authorized_keys.d/root        # nur der Nitrokey, kein ssh-rsa
 
 Das beiseitegelegte Verzeichnis kann weg, sobald das geprüft ist. Es
