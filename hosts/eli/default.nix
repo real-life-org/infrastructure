@@ -52,6 +52,12 @@
       # Anwesenheitspflicht schliessen einander aus; der Hardwareschluessel
       # bleibt fuer root und fuer Zugriffe, die tief ins System reichen.
       "command=\"/etc/ssh/rsync-anton.sh\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH/v/HVgj7HLWdLtg6AbSMda+4UrBjDYAr+G0gVxbBRh anton-session-sync"
+      # Und einer fuer die Codex-Sitzungen. Zwei Schluessel statt einem
+      # mit weiterem Wurzelverzeichnis: ein Schluessel auf
+      # /home/eli/geist/archive duerfte auch in Timos Verzeichnis
+      # schreiben. Diese Grenze ist der Grund, warum es die Wrapper
+      # ueberhaupt gibt.
+      "command=\"/etc/ssh/rsync-codex.sh\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID0BtWdgxZpt9zakBfEpZuVXfMABYtnfxMphTIfskrmY anton-codex-sync"
     ];
   };
 
@@ -111,6 +117,27 @@
               echo "Nur rsync erlaubt."
               echo "  Backups holen:    rsync -av eli@<host>:/ ./eli-backups/"
               echo "  Sessions senden:  rsync -av ./sessions/ eli@<host>:"
+              exit 1
+              ;;
+      esac
+    '';
+  };
+
+  # Die Codex-Sitzungen kommen vom selben Rechner, gehoeren im Archiv
+  # aber in ein eigenes Verzeichnis - serve.py fuehrt anton, timo und
+  # codex als getrennte Nutzer. Nur schreiben, kein Lesen: Backups holt
+  # der anton-Schluessel.
+  environment.etc."ssh/rsync-codex.sh" = {
+    mode = "0755";
+    text = ''
+      #!/bin/sh
+      case "$SSH_ORIGINAL_COMMAND" in
+          "rsync --server "*)
+              exec ${pkgs.rrsync}/bin/rrsync -wo /home/eli/geist/archive/codex
+              ;;
+          *)
+              echo "Nur rsync zum Senden erlaubt."
+              echo "  rsync -av ./sessions/ eli@<host>:"
               exit 1
               ;;
       esac
