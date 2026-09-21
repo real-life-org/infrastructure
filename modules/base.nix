@@ -37,9 +37,29 @@
     wget
   ];
 
-  # Automatic security updates
+  # Naechtlicher Rebuild aus diesem Repo, 04:40, ohne Neustart.
+  #
+  # Bis zum 21.09.2026 stand hier nur `enable = true`, ohne `flake`. Der
+  # Dienst rief dann `nixos-rebuild switch --upgrade` auf, den Weg ueber
+  # /etc/nixos - und ein aus dem Flake gebautes System hat kein
+  # `nixos-config` im NIX_PATH (nixpkgs: misc/nixpkgs-flake.nix). Der
+  # Lauf scheiterte jede Nacht mit "file 'nixos-config' was not found":
+  # auf timo seit mindestens Juni 2026, auf eli seit der Installation.
+  # Es gab nie ein automatisches Update. Die Ueberschrift hiess trotzdem
+  # "Automatic security updates".
+  #
+  # Zwei Folgen, beide bewusst:
+  #
+  # 1. Ein Merge in dieses Repo ist ein Deploy auf jeden Host, am
+  #    naechsten Morgen. Wer das fuer einen Host nicht will, setzt dort
+  #    `system.autoUpgrade.enable = false` und schreibt dazu, warum.
+  #
+  # 2. Sicherheitsupdates kommen NUR, wenn jemand flake.lock hebt.
+  #    nixpkgs ist gepinnt; `--refresh` holt den aktuellen Stand des
+  #    Repos, nicht von nixpkgs. Siehe Issue zur Lock-Pflege.
   system.autoUpgrade = {
     enable = true;
+    flake = "github:real-life-org/infrastructure#${config.networking.hostName}";
     allowReboot = false;
   };
 
