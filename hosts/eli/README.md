@@ -166,6 +166,25 @@ Lock-Datei pinnt zwangsläufig einen **älteren** Stand desselben Repos;
 der schlichte Befehl würde dann still dorthin zurückbauen. Ein Abbruch
 mit Hinweis ist ehrlicher als ein Erfolg, der etwas anderes baut.
 
+### Der nächtliche Lauf
+
+`base.nix` schaltet `system.autoUpgrade` ein, täglich 04:40. Ohne
+`flake` ruft der Dienst `nixos-rebuild switch --upgrade` auf, also den
+Weg über `/etc/nixos`. **Seit dem 19.09.2026 war das jede Nacht ein
+Bauversuch aus der `nixos-infect`-Altlast.** Dass der Server noch
+steht, heißt nur, dass diese Läufe gescheitert sind; nachsehen:
+
+    journalctl -u nixos-upgrade --since 2026-09-19 --no-pager | tail -40
+
+Seit diesem Stand steht für Eli `system.autoUpgrade.flake` auf dem
+Repo. Der nächtliche Lauf baut damit dasselbe wie der Befehl von Hand.
+Folge, bewusst: **was auf `main` liegt, ist am nächsten Morgen auf dem
+Server.** Ein Merge in dieses Repo ist ein Deploy. Wer das nicht will,
+schaltet den Dienst für Eli ab und schreibt dazu, warum.
+
+Dieselbe Frage stellt sich für `timo`: dort gilt `base.nix` ebenso, und
+was in seinem `/etc/nixos` liegt, ist nicht aufgeschrieben.
+
 ### Aufräumen, einmalig, als root
 
 Die neue `configuration.nix` ersetzt die alte beim nächsten Rebuild von
