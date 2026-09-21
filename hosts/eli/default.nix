@@ -144,5 +144,16 @@
     '';
   };
 
+  # /etc/nixos zeigt auf ein Flake, das nur dieses Repo nennt. Damit
+  # baut ein schlichtes `nixos-rebuild switch` dasselbe wie der lange
+  # Befehl mit `--flake`. Vorher lag dort die nixos-infect-Ausgabe vom
+  # 19.09.2026, siehe etc-nixos/flake.nix und README.
+  #
+  # Greift erst, wenn das alte Verzeichnis weg ist: die Aktivierung
+  # ersetzt kein Verzeichnis mit fremden Dateien durch einen Symlink,
+  # sie warnt nur ("directory contains user files"). Der Handgriff
+  # steht im README.
+  environment.etc."nixos".source = ./etc-nixos;
+
   system.stateVersion = "24.11";
 }

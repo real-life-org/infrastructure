@@ -10,7 +10,8 @@ kann, ohne dass jemand sich erst auf dem Server umsehen muss.
 |---|---|
 | `default.nix` | Rechnername, alle SSH-Zugänge, Timos eingeschränkter Wrapper |
 | `dienste.nix` | Start des Container-Stapels, tägliches Backup, Mail-Ports |
-| `hardware-configuration.nix` | **Platzhalter**, siehe unten |
+| `hardware-configuration.nix` | Platten, Boot-Partition, seit 19.09.2026 vom echten System |
+| `etc-nixos/flake.nix` | wird zu `/etc/nixos` auf dem Server, nennt nur dieses Repo |
 
 Ohne `traefik.nix`: Eli hat ihren eigenen Caddy als Container, mit
 Zertifikaten, die seit Monaten laufen. Auf Traefik umzustellen wäre eine
@@ -131,6 +132,46 @@ konfiguriert werden muss:
     ip link set ens6 up
     ip route add 82.165.138.1 dev ens6
     ip route add default via 82.165.138.1 dev ens6
+
+## Ausrollen
+
+Der Server wird aus diesem Repo gebaut:
+
+    nixos-rebuild switch --flake github:real-life-org/infrastructure#eli
+
+Seit dem 21.09.2026 zeigt `/etc/nixos` auf `etc-nixos/flake.nix`, das
+nur dieses Repo nennt. Ein schlichtes `nixos-rebuild switch` baut damit
+dasselbe wie der lange Befehl. `nixos-rebuild` folgt einem Symlink
+`/etc/nixos/flake.nix` ausdrücklich (`readlink -f`, dann `dirname`).
+
+### Warum das nötig war
+
+`nixos-infect` hinterließ am 19.09.2026 in `/etc/nixos/` seine eigene
+Beschreibung des Servers: Rechnername `ubuntu`, `stateVersion = "23.11"`,
+und Antons alter RSA-Schlüssel für root — derselbe, der am selben Tag
+als root-äquivalent entfernt wurde. Die lief nie, aber sie lag da. Ein
+`nixos-rebuild switch` ohne `--flake` hätte daraus gebaut: Rechnername
+zurück, alter Schlüssel wieder frei, Elis Nutzer weg, Timos Zugang weg,
+alle Dienste weg.
+
+### Der Handgriff, einmalig, als root
+
+Die Aktivierung ersetzt kein Verzeichnis mit fremden Dateien durch einen
+Symlink; sie warnt nur (`/etc/nixos directory contains user files.
+Symlinking may fail.`). Darum muss die Altlast vorher weg:
+
+    ls -la /etc/nixos                       # ansehen, was da liegt
+    mv /etc/nixos /root/etc-nixos-infect-2026-09-19
+    nixos-rebuild switch --flake github:real-life-org/infrastructure#eli
+
+Danach prüfen, nicht glauben:
+
+    readlink -f /etc/nixos/flake.nix        # muss in /nix/store zeigen
+    nixos-rebuild dry-build                 # ohne --flake, muss `eli` bauen
+    cat /etc/ssh/authorized_keys.d/root   # nur der Nitrokey, kein ssh-rsa
+
+Das beiseitegelegte Verzeichnis kann weg, sobald das geprüft ist. Es
+enthält nichts, was nicht auch hier im Repo steht.
 
 ## Zugänge
 
