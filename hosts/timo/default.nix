@@ -16,5 +16,8 @@
     ];
   };
 
+  # Compose-Stacks ausserhalb von bridge: lichtung.ooo (HumHub) und Redekreis
+  realLife.traefik.extraNetworks = [ "humhub_default" "kreis" ];
+
   system.stateVersion = "24.11";
 }
