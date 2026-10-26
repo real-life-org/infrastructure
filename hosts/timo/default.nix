@@ -16,8 +16,9 @@
     ];
   };
 
-  # Compose-Stacks ausserhalb von bridge: lichtung.ooo (HumHub) und Redekreis
-  realLife.traefik.extraNetworks = [ "humhub_default" "kreis" ];
+  # Compose-Stacks ausserhalb von bridge: lichtung.ooo (HumHub), Redekreis
+  # und der VTI-Mediator (web-of-trust deploy/mediator)
+  realLife.traefik.extraNetworks = [ "humhub_default" "kreis" "mediator-edge" ];
 
   system.stateVersion = "24.11";
 }
