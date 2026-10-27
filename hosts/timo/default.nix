@@ -16,6 +16,15 @@
     ];
   };
 
+  # Anton, non-root: runs the mediator stack (web-of-trust deploy/mediator)
+  users.users.anton = {
+    isNormalUser = true;
+    extraGroups = [ "docker" ];
+    openssh.authorizedKeys.keys = [
+      "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEOKw84pd96hpzCtWeuf3/2pJZ1Ue9Zq1O8mkVh75kNVAAAABHNzaDo= mail@antontranelis.de"
+    ];
+  };
+
   # Compose-Stacks ausserhalb von bridge: lichtung.ooo (HumHub), Redekreis
   # und der VTI-Mediator (web-of-trust deploy/mediator)
   realLife.traefik.extraNetworks = [ "humhub_default" "kreis" "mediator-edge" ];
