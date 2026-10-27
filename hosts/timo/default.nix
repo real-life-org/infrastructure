@@ -13,7 +13,14 @@
     extraGroups = [ "docker" ];
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICsttgnEFLbNmin2V2TJ9Va9aleBwKTC226W76r2vSbD timo"
-      # Anton (Nitrokey): deploys the compose stacks that run as timo
+    ];
+  };
+
+  # Anton, non-root: runs the mediator stack (web-of-trust deploy/mediator)
+  users.users.anton = {
+    isNormalUser = true;
+    extraGroups = [ "docker" ];
+    openssh.authorizedKeys.keys = [
       "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEOKw84pd96hpzCtWeuf3/2pJZ1Ue9Zq1O8mkVh75kNVAAAABHNzaDo= mail@antontranelis.de"
     ];
   };
