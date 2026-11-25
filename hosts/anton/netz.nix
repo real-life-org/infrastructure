@@ -1,10 +1,10 @@
 { config, pkgs, lib, ... }:
 let
-  # Die MAC aendert sich bei der Neuinstallation (bei eli am 19.09.2026
-  # erlebt). Erst nach der Neuinstallation ablesen und hier eintragen:
+  # Die MAC aendert sich bei jeder Neuinstallation: vor der vom
+  # 25.11.2026 war es 02:01:d9:44:60:0d. Vor jedem Rebuild nach einer
+  # Neuinstallation pruefen:
   #   ip link show ens6 | grep -o "link/ether [0-9a-f:]*"
-  # Unter Ubuntu vor der Neuinstallation: 02:01:d9:44:60:0d.
-  mac = "NACH-NEUINSTALLATION-EINTRAGEN";
+  mac = "02:01:5d:ec:4d:40";
 in
 {
   # Dasselbe Muster wie eli (siehe hosts/eli/netz.nix): eine /32-Adresse,
@@ -17,10 +17,7 @@ in
   #   IPv6           2a02:2479:79:2d00::1/128, Router ueber fe80::1
   #
   # Faellt die Link-Route weg, ist der Server nach dem Neustart still.
-  assertions = [{
-    assertion = builtins.match "([0-9a-f]{2}:){5}[0-9a-f]{2}" mac != null;
-    message = "hosts/anton/netz.nix: MAC nach der Neuinstallation eintragen.";
-  }];
+  # Das frisch installierte Ubuntu 26.04 bekam per DHCP genau dasselbe.
 
   networking = {
     useDHCP = false;
@@ -35,8 +32,13 @@ in
     defaultGateway = { address = "85.215.34.1"; interface = "ens6"; };
     defaultGateway6 = { address = "fe80::1"; interface = "ens6"; };
 
-    # Die Resolver, zu denen Ubuntu per DHCP eigene Routen bekam.
-    nameservers = [ "212.227.123.16" "212.227.123.17" ];
+    # Die Resolver, die Ubuntu per DHCP bekam.
+    nameservers = [
+      "212.227.123.16"
+      "212.227.123.17"
+      "2001:8d8:fe:53:72ec::1"
+      "2001:8d8:fe:53:72ec::2"
+    ];
   };
 
   # Serielle Konsole wie unter Ubuntu; sie ist der Rueckweg, wenn das
