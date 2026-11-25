@@ -41,6 +41,22 @@
           ./modules/docker.nix
         ];
       };
+
+      # Der zweite Strato-Server, neu aufgesetzt im November 2026. Ohne
+      # traefik.nix und watchtower.nix: Caddy bleibt als Container (die
+      # Karten-Domains haengen an Zertifikaten ueber INWX), und die
+      # Dienste hier haben Zustand, den ein unbeaufsichtigtes Image-Update
+      # beschaedigen kann.
+      anton = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          ./hosts/anton/hardware-configuration.nix
+          ./hosts/anton/default.nix
+          ./hosts/anton/netz.nix
+          ./modules/base.nix
+          ./modules/docker.nix
+        ];
+      };
     };
   };
 }
