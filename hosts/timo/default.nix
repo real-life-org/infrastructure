@@ -3,9 +3,7 @@
   networking.hostName = "timo";
 
   # Admin: Anton (root access via Nitrokey)
-  users.users.root.openssh.authorizedKeys.keys = [
-    "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEOKw84pd96hpzCtWeuf3/2pJZ1Ue9Zq1O8mkVh75kNVAAAABHNzaDo= mail@antontranelis.de"
-  ];
+  users.users.root.openssh.authorizedKeys.keys = import ../../nitrokeys.nix;
 
   # Timo: Docker-Rechte, kein sudo
   users.users.timo = {
@@ -20,9 +18,7 @@
   users.users.anton = {
     isNormalUser = true;
     extraGroups = [ "docker" ];
-    openssh.authorizedKeys.keys = [
-      "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEOKw84pd96hpzCtWeuf3/2pJZ1Ue9Zq1O8mkVh75kNVAAAABHNzaDo= mail@antontranelis.de"
-    ];
+    openssh.authorizedKeys.keys = import ../../nitrokeys.nix;
   };
 
   # Compose-Stacks ausserhalb von bridge: lichtung.ooo (HumHub), Redekreis

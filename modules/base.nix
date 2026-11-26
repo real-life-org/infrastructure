@@ -19,6 +19,15 @@
       PermitRootLogin = "prohibit-password";
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
+      # OpenSSH sperrt Quelladressen nach gescheiterten oder haengenden
+      # Verbindungen, bis zu 600 s und dann wiederholt. Antons Mobilfunk-
+      # Adressen teilt er per Carrier-NAT mit vielen anderen; deren
+      # Fehlversuche sperrten ihn am 25./26.11.2026 wiederholt aus. Mit nur
+      # Schluessel-Anmeldung schuetzt die Sperre nicht vor Raten, nur vor
+      # Last; eine Minute genuegt dafuer. Jede Einzelstrafe hoechstens 60 s:
+      # die erste Sperre einer Adresse dauert so lang wie das ausloesende
+      # Ereignis (crash), max greift erst beim Verlaengern.
+      PerSourcePenalties = "crash:60 authfail:5 noauth:1 grace-exceeded:10 max:60 min:15";
     };
   };
 

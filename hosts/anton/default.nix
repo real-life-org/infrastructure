@@ -7,9 +7,7 @@
   networking.hostName = "anton";
 
   # Root nur ueber Antons Nitrokey, wie auf timo und eli.
-  users.users.root.openssh.authorizedKeys.keys = [
-    "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEOKw84pd96hpzCtWeuf3/2pJZ1Ue9Zq1O8mkVh75kNVAAAABHNzaDo= mail@antontranelis.de"
-  ];
+  users.users.root.openssh.authorizedKeys.keys = import ../../nitrokeys.nix;
 
   # anton betreibt die Container. Wer in der docker-Gruppe ist, ist
   # faktisch root (der Daemon laeuft als root, ein Container kann /
@@ -18,9 +16,7 @@
   users.users.anton = {
     isNormalUser = true;
     extraGroups = [ "docker" ];
-    openssh.authorizedKeys.keys = [
-      "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEOKw84pd96hpzCtWeuf3/2pJZ1Ue9Zq1O8mkVh75kNVAAAABHNzaDo= mail@antontranelis.de"
-    ];
+    openssh.authorizedKeys.keys = import ../../nitrokeys.nix;
   };
 
   system.stateVersion = "24.11";
