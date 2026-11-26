@@ -30,7 +30,11 @@ jobs:
       - name: Alle Hosts auswerten
         run: |
           set -euo pipefail
-          for host in $(nix eval --json .#nixosConfigurations --apply builtins.attrNames | jq -r '.[]'); do
+          # erst einsammeln: ein Fehler in $(...) einer for-Liste bricht nicht ab
+          namen=$(nix eval --json .#nixosConfigurations --apply builtins.attrNames)
+          hosts=$(jq -r '.[]' <<< "$namen")
+          [ -n "$hosts" ] || { echo "::error::keine nixosConfigurations gefunden"; exit 1; }
+          for host in $hosts; do
             echo "== $host"
             nix eval --raw ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" 2> err.txt || { cat err.txt; exit 1; }
             echo
