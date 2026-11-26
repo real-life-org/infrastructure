@@ -2,7 +2,7 @@
   description = "Real Life Infrastructure — NixOS Server Configurations";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     # Nur fuer einzelne Pakete, die GitHub oder andere Dienste in neuer
     # Version verlangen (GitHub-Runner: Mindestversion seit Februar 2026).
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";

@@ -16,7 +16,13 @@
   # Wer dieses Modul importiert, sagt damit: alle Container hier
   # vertragen einen Austausch im laufenden Betrieb.
   virtualisation.oci-containers.containers.watchtower = {
-    image = "containrrr/watchtower";
+    # containrrr/watchtower ist seit Dezember 2025 archiviert und spricht
+    # eine Docker-API, die Docker 29 nicht mehr annimmt. Der gepflegte Fork
+    # von nicholas-fedor ist ein Ersatz mit denselben Variablen und
+    # handelt die API-Version aus. Feste Version: Watchtower hat den
+    # Docker-Socket, ein unbeaufsichtigter Wechsel seines Images waere
+    # ein Wechsel dessen, der root hat.
+    image = "nickfedor/watchtower:1.24.2";
     volumes = [
       "/var/run/docker.sock:/var/run/docker.sock"
       "/root/.docker/config.json:/config.json"
