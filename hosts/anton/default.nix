@@ -19,5 +19,13 @@
     openssh.authorizedKeys.keys = import ../../nitrokeys.nix;
   };
 
+  # Watchtower nur fuer markierte Container: die WoT-Dienste und Karabirrdt
+  # (Images aus der CI, oeffentlich auf ghcr.io). Nextcloud, Karte, HedgeDoc,
+  # Plausible und der Mediator tragen das Label nicht und bleiben unberuehrt.
+  realLife.watchtower = {
+    nurMarkierte = true;
+    registryAnmeldung = null;
+  };
+
   system.stateVersion = "24.11";
 }
