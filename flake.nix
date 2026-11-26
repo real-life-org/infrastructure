@@ -3,20 +3,12 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    # Nur fuer timo, voruebergehend: dort laufen traefik:v3.3 und
-    # containrrr/watchtower, deren Docker-Clients aeltere API-Versionen
-    # sprechen, als Docker 29 (nixos-26.05) annimmt. Mit 26.05 verloeren
-    # beide den Zugang zu Docker und alle Seiten hinter Traefik fielen aus.
-    # timo ist zurzeit nicht erreichbar, also nicht testbar. Sobald er es
-    # ist: Traefik und Watchtower auf Docker-29-faehige Fassungen heben,
-    # timo auf nixpkgs umstellen, diesen Eingang entfernen.
-    nixpkgs-2411.url = "github:NixOS/nixpkgs/nixos-24.11";
     # Nur fuer einzelne Pakete, die GitHub oder andere Dienste in neuer
     # Version verlangen (GitHub-Runner: Mindestversion seit Februar 2026).
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-2411, nixpkgs-unstable, ... }: {
+  outputs = { self, nixpkgs, nixpkgs-unstable, ... }: {
     nixosModules = {
       base = import ./modules/base.nix;
       docker = import ./modules/docker.nix;
@@ -25,7 +17,7 @@
     };
 
     nixosConfigurations = {
-      timo = nixpkgs-2411.lib.nixosSystem {   # Ausnahme, siehe Eingang nixpkgs-2411
+      timo = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           ./hosts/timo/hardware-configuration.nix
