@@ -6,17 +6,18 @@
   boot.initrd.kernelModules = [ "nvme" ];
   fileSystems."/" = { device = "/dev/vda1"; fsType = "ext4"; };
 
-  # Auf der Platte liegt noch eine Boot-Partition vom urspruenglichen
-  # Ubuntu (vda16, ext4, Label BOOT), dazu eine EFI-Partition (vda15).
-  # Gestartet wird per GRUB von /dev/vda, die Kernel liegen in /boot auf
-  # der Wurzel. systemd (ab nixos-26.05) erkennt vda16 von selbst und
-  # versucht, sie ueber /boot zu haengen. Gelaenge das, schriebe der
-  # naechste Rebuild die Kernel dorthin, waehrend GRUB sie auf der Wurzel
-  # sucht, und der Server startete nicht mehr (vgl. hosts/eli/README.md).
-  # Am 26.11.2026 erlebt: das Einhaengen scheiterte, aber der automount-
-  # Platzhalter auf /boot liess dbus-broker beim Aufbau seines
-  # Namensraums scheitern ("/boot: No such device"); ohne D-Bus blieb
-  # Docker in "activating" haengen.
-  # Deshalb die automatische Partitionserkennung aus.
+  # /boot ist die eigene Boot-Partition vda16 (ext4, Label BOOT), von der
+  # GRUB die Kernel laedt: BOOT_IMAGE=(hd0,gpt16)/kernels/... Sie stand nie
+  # in dieser Datei. Bis nixos-24.11 hing systemd-gpt-auto sie still von
+  # selbst ein. Ab 26.05 haelt gpt-auto sie fuer eine FAT-Partition und
+  # scheitert ("Can't find a valid FAT filesystem"); der automount-
+  # Platzhalter auf /boot liess dazu dbus-broker scheitern, und Docker blieb
+  # ohne D-Bus in "activating" (26.11.2026). Haette ein Rebuild danach die
+  # Kernel nach /boot auf der Wurzel geschrieben, haette GRUB sie nicht
+  # gefunden. Also ausdruecklich eintragen, wie bei eli, und gpt-auto aus.
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/419169ed-e354-47f5-9c4a-a6a4f1a382fa";
+    fsType = "ext4";
+  };
   boot.kernelParams = [ "systemd.gpt_auto=0" ];
 }
