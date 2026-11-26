@@ -7,6 +7,7 @@ let
   # Fehlt die Datei, schreibt der Melder nur ins Journal.
   envDatei = "/var/lib/secrets/melder.env";
   host = config.networking.hostName;
+  marke = "/var/lib/melder/letztes-update";
 
   senden = pkgs.writeShellScript "melder-senden" ''
     set -u
@@ -15,10 +16,13 @@ let
     [ -r ${envDatei} ] || { echo "melder: ${envDatei} fehlt, nichts gesendet"; exit 0; }
     # shellcheck disable=SC1091
     . ${envDatei}
-    ${pkgs.curl}/bin/curl -fsS --max-time 20 -o /dev/null \
-      --data-urlencode "chat_id=$TELEGRAM_CHAT" \
-      --data-urlencode "text=$text" \
-      "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
+    # Die URL mit dem Token kommt ueber stdin (--config -), nicht als Argument:
+    # Argumente sieht jeder Prozess in ps. printf ist eingebaut, kein eigener
+    # Prozess.
+    printf 'url = "https://api.telegram.org/bot%s/sendMessage"\n' "$TELEGRAM_TOKEN" \
+      | ${pkgs.curl}/bin/curl -fsS --max-time 20 -o /dev/null --config - \
+          --data-urlencode "chat_id=$TELEGRAM_CHAT" \
+          --data-urlencode "text=$text" \
       || echo "melder: Senden fehlgeschlagen"
   '';
 in
@@ -35,7 +39,12 @@ in
 
   # Das naechtliche Update meldet, wenn es scheitert. Elis Update ist zwei
   # Monate lang jede Nacht gescheitert, ohne dass es jemand bemerkt hat.
-  systemd.services.nixos-upgrade.unitConfig.OnFailure = [ "melder@%n.service" ];
+  # Nach jedem erfolgreichen Lauf eine Zeitmarke: daran misst die taegliche
+  # Pruefung, ob das Update ueberfaellig ist, unabhaengig von Neustarts.
+  systemd.services.nixos-upgrade = {
+    unitConfig.OnFailure = [ "melder@%n.service" ];
+    serviceConfig.ExecStartPost = "${pkgs.coreutils}/bin/touch ${marke}";
+  };
 
   # Taeglich: fehlgeschlagene Dienste, knapper Platz, ueberfaelliges Update.
   systemd.services.melder-pruefung = {
@@ -44,23 +53,21 @@ in
     path = with pkgs; [ coreutils gawk systemd ];
     script = ''
       befunde=""
-      fehl=$(systemctl --failed --no-legend --plain | awk '{print $1}' | tr '\n' ' ')
+      fehl=$(systemctl --failed --no-legend --plain | awk 'NF {printf "%s ", $1}')
       [ -z "$fehl" ] || befunde="$befunde
       - fehlgeschlagen: $fehl"
       belegt=$(df --output=pcent / | tail -1 | tr -dc '0-9')
       [ "$belegt" -lt 85 ] || befunde="$befunde
       - Platte / zu $belegt % belegt"
-      zuletzt=$(systemctl show nixos-upgrade.service -p ExecMainExitTimestampMonotonic --value)
       ergebnis=$(systemctl show nixos-upgrade.service -p Result --value)
-      jetzt=$(awk '{print int($1 * 1000000)}' /proc/uptime)
-      # Nur pruefbar, wenn das Update seit dem Start schon lief
-      if [ "''${zuletzt:-0}" -gt 0 ] && [ "$ergebnis" != success ]; then
-        befunde="$befunde
+      [ "$ergebnis" = success ] || befunde="$befunde
       - letztes naechtliches Update: $ergebnis"
-      fi
-      if [ "$jetzt" -gt $((3 * 86400 * 1000000)) ] && [ "''${zuletzt:-0}" -eq 0 ]; then
+      if [ ! -e ${marke} ]; then
         befunde="$befunde
-      - naechtliches Update lief seit ueber 3 Tagen nicht"
+      - noch kein erfolgreiches naechtliches Update vermerkt"
+      elif [ $(( $(date +%s) - $(stat -c %Y ${marke}) )) -gt $((3 * 86400)) ]; then
+        befunde="$befunde
+      - letztes erfolgreiches Update vor mehr als 3 Tagen ($(date -r ${marke} '+%d.%m. %H:%M'))"
       fi
       [ -z "$befunde" ] && { echo "alles in Ordnung"; exit 0; }
       ${senden} "${host}:$befunde"
@@ -74,5 +81,8 @@ in
     };
   };
 
-  systemd.tmpfiles.rules = [ "d /var/lib/secrets 0700 root root -" ];
+  systemd.tmpfiles.rules = [
+    "d /var/lib/secrets 0700 root root -"
+    "d /var/lib/melder 0755 root root -"
+  ];
 }
