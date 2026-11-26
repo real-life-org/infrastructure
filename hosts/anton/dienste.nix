@@ -67,17 +67,27 @@
   # Anton ueber Claude veroeffentlicht, kommt per rsync hierher und wird
   # von Caddy statisch ausgeliefert. Der Schluessel liegt ohne Passphrase
   # auf Antons Laptop (ein Hook hat keinen Finger), darf deshalb nur
-  # schreiben, nur in /srv/artifacts und nichts loeschen. Eigener Nutzer
-  # ohne docker-Gruppe: ein gestohlener Schluessel legt Dateien ab, mehr nicht.
+  # schreiben, nur in /srv/artifacts und nichts loeschen; -munge entschaerft
+  # hochgeladene Symlinks, damit nichts ausserhalb ausgeliefert wird. Eigener
+  # Nutzer ohne docker-Gruppe: ein gestohlener Schluessel legt Dateien ab,
+  # mehr nicht.
   users.users.artifacts = {
     isSystemUser = true;
     group = "artifacts";
-    home = "/srv/artifacts";
+    # Das Home ist NICHT das Upload-Ziel. Laege es in /srv/artifacts, koennte
+    # der Schluessel dort .bashrc oder .ssh/rc ablegen, und sshd bzw. Bash
+    # werteten sie vor dem erzwungenen Kommando aus (rrsync(1), "Bash
+    # security issue"). /var/empty gehoert root und ist fuer artifacts
+    # nicht beschreibbar.
+    home = "/var/empty";
+    createHome = false;
     # sshd startet das erzwungene Kommando ueber die Login-Shell; mit
     # nologin (Vorgabe fuer Systemnutzer) liefe nichts.
     useDefaultShell = true;
     openssh.authorizedKeys.keys = [
-      "command=\"/etc/ssh/rsync-artifacts.sh\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBAQjwrkW7rO2r/Cr7csvirFr//em9w6McR6K0nGN8Yw artifact-mirror"
+      # restrict schaltet alles ab, was nicht ausdruecklich erlaubt ist,
+      # auch ~/.ssh/rc (no-user-rc).
+      "restrict,command=\"/etc/ssh/rsync-artifacts.sh\" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBAQjwrkW7rO2r/Cr7csvirFr//em9w6McR6K0nGN8Yw artifact-mirror"
     ];
   };
   users.groups.artifacts = { };
@@ -92,7 +102,7 @@
               exit 1
               ;;
           "rsync --server "*)
-              exec ${pkgs.rrsync}/bin/rrsync -wo -no-del /srv/artifacts
+              exec ${pkgs.rrsync}/bin/rrsync -wo -no-del -munge /srv/artifacts
               ;;
           *)
               echo "Nur rsync erlaubt: rsync seite.html artifacts@<host>:"
