@@ -14,6 +14,7 @@
       docker = import ./modules/docker.nix;
       watchtower = import ./modules/watchtower.nix;
       traefik = import ./modules/traefik.nix;
+      melder = import ./modules/melder.nix;
     };
 
     nixosConfigurations = {
@@ -23,6 +24,7 @@
           ./hosts/timo/hardware-configuration.nix
           ./hosts/timo/default.nix
           ./modules/base.nix
+          ./modules/melder.nix
           ./modules/docker.nix
           ./modules/watchtower.nix
           ./modules/traefik.nix
@@ -41,6 +43,7 @@
           ./hosts/eli/dienste.nix
           ./hosts/eli/netz.nix
           ./modules/base.nix
+          ./modules/melder.nix
           ./modules/docker.nix
         ];
       };
@@ -59,6 +62,7 @@
           ./hosts/anton/netz.nix
           ./hosts/anton/dienste.nix
           ./modules/base.nix
+          ./modules/melder.nix
           ./modules/docker.nix
         ];
       };

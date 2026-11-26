@@ -89,16 +89,15 @@
     };
   };
 
-  # Ports. Ueber die drei aus modules/base.nix hinaus braucht Eli die
-  # Mail-Ports: sie hat eine eigene Adresse unter eli.utopia-lab.org und
-  # kann darueber empfangen und antworten. Der Dienst ist zurzeit
-  # ungenutzt, aber Teil des Entwurfs und sauber konfiguriert (Port 25
-  # weist fremde Empfaenger ab, 587 verlangt Anmeldung).
+  # Mail: Eli hat eine eigene Adresse unter eli.utopia-lab.org (Maddy,
+  # Container eli-mail). Nach aussen offen ist nur Port 25, ueber den
+  # andere Mailserver einliefern. Senden und Lesen (465, 587, 143, 993)
+  # laufen nur im Docker-Netz: Elis eigener Code erreicht Maddy dort, und
+  # niemand liest das Postfach mit einem Mailprogramm von aussen.
+  # Entscheidung Eli und Anton, 26.11.2026. Die Ports muessen auch in der
+  # Compose-Datei (eli-geist/geist) fehlen, sonst oeffnet Docker sie an
+  # dieser Firewall vorbei.
   networking.firewall.allowedTCPPorts = [
     25    # SMTP, eingehend
-    143   # IMAP
-    465   # SMTPS
-    587   # Submission
-    993   # IMAPS
   ];
 }
