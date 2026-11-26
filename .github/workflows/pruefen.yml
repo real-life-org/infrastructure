@@ -1,0 +1,61 @@
+# Prueft jeden PR und jeden Stand von main, bevor ein Server ihn um 04:40 baut.
+#
+# 1. Alle Hosts muessen sich auswerten lassen (Fehler oder Warnungen = rot).
+# 2. Der Stand von nixpkgs in flake.lock darf nicht zu alt sein, und der Zweig
+#    muss eine gepflegte NixOS-Version sein. Bis November 2026 stand hier ein
+#    Pin vom 30.06.2025 auf einem eingestellten Zweig; niemand hat es bemerkt.
+#
+# Actions per Commit-SHA gepinnt: ein verschobener Tag soll nicht still neuen
+# Code in die Pruefung bringen.
+name: Pruefen
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1"   # montags: auch ohne Aenderung an das Alter erinnern
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auswerten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      - name: Alle Hosts auswerten
+        run: |
+          set -euo pipefail
+          for host in $(nix eval --json .#nixosConfigurations --apply builtins.attrNames | jq -r '.[]'); do
+            echo "== $host"
+            nix eval --raw ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" 2> err.txt || { cat err.txt; exit 1; }
+            echo
+            w=$(nix eval --json ".#nixosConfigurations.$host.config.warnings")
+            [ "$w" = "[]" ] || { echo "Warnungen bei $host: $w"; exit 1; }
+          done
+      - name: Stand von nixpkgs pruefen
+        run: |
+          set -euo pipefail
+          ref=$(jq -r '.nodes.nixpkgs.original.ref' flake.lock)
+          modified=$(jq -r '.nodes.nixpkgs.locked.lastModified' flake.lock)
+          alter=$(( ($(date +%s) - modified) / 86400 ))
+          echo "nixpkgs: $ref, Stand vor $alter Tagen"
+          # Gepflegt ist ein Release-Zweig, dessen Kopf in den letzten 30 Tagen
+          # noch Commits bekommen hat (eingestellte Zweige frieren ein).
+          kopf=$(curl -fsS "https://api.github.com/repos/NixOS/nixpkgs/commits/$ref" | jq -r '.commit.committer.date')
+          kopf_alter=$(( ($(date +%s) - $(date -d "$kopf" +%s)) / 86400 ))
+          echo "Zweig $ref: letzter Commit vor $kopf_alter Tagen"
+          [ "$kopf_alter" -le 30 ] || { echo "::error::$ref wird nicht mehr gepflegt; auf die aktuelle NixOS-Version umstellen"; exit 1; }
+          [ "$alter" -le 45 ] || { echo "::error::flake.lock: nixpkgs ist $alter Tage alt; nix flake update nixpkgs"; exit 1; }
+          # Der GitHub-Runner auf anton kommt aus nixpkgs-unstable und aktualisiert
+          # sich nicht selbst; GitHub weist ihn ab, wenn er zu alt wird.
+          u=$(jq -r '.nodes."nixpkgs-unstable".locked.lastModified // empty' flake.lock)
+          if [ -n "$u" ]; then
+            ualter=$(( ($(date +%s) - u) / 86400 ))
+            echo "nixpkgs-unstable: Stand vor $ualter Tagen"
+            [ "$ualter" -le 30 ] || { echo "::error::flake.lock: nixpkgs-unstable ist $ualter Tage alt (GitHub-Runner); nix flake update nixpkgs-unstable"; exit 1; }
+          fi
