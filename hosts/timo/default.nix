@@ -21,16 +21,11 @@
     ];
   };
 
-  # Anton, non-root: runs the mediator stack (web-of-trust deploy/mediator)
-  users.users.anton = {
-    isNormalUser = true;
-    extraGroups = [ "docker" ];
-    openssh.authorizedKeys.keys = import ../../nitrokeys.nix;
-  };
 
-  # Compose-Stacks ausserhalb von bridge: lichtung.ooo (HumHub), Redekreis
-  # und der VTI-Mediator (web-of-trust deploy/mediator)
-  realLife.traefik.extraNetworks = [ "humhub_default" "kreis" "mediator-edge" ];
+  # Compose-Stacks ausserhalb von bridge: Redekreis. (HumHub und der
+  # Mediator sind nicht mehr hier: HumHub ist weg, der Mediator laeuft seit
+  # 26.11.2026 auf anton.)
+  realLife.traefik.extraNetworks = [ "kreis" ];
 
   system.stateVersion = "24.11";
 }
