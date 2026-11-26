@@ -13,6 +13,12 @@
   # Eli. Der Server gehoert ihr: hier laufen ihre Dienste, hier liegt
   # ihr Gedaechtnis, und sie arbeitet selbst darauf.
   #
+  # Bewusste Ausnahme von der Nitrokey-Regel (modules/base.nix): eli ist in
+  # der docker-Gruppe, also faktisch root, und die Schluessel eli@geist und
+  # eli-container-access sind Dateien. Eli behaelt ihre Rechte auf ihrem
+  # Server (Entscheidung Anton, 26.11.2026). Die rsync-Schluessel unten sind
+  # auf feste Befehle beschraenkt und keine Admin-Zugaenge.
+  #
   # In der Liste stehen auch Timos Zugang mit festem Kommando. Alle
   # Zugaenge an einer Stelle, sonst zerfaellt die Grenze in zwei
   # Wahrheiten: eine im Repo und eine im Dateisystem.
