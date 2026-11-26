@@ -13,8 +13,16 @@
   };
 
   # SSH hardening
+  #
+  # Regel (Anton, 26.11.2026): Admin-Zugang (root, und alles mit Docker-
+  # Rechten) nur ueber Antons zwei Nitrokeys (nitrokeys.nix). Ausnahmen stehen
+  # beim jeweiligen Host mit Begruendung (timo: Timo, eli: Eli).
   services.openssh = {
     enable = true;
+    # Nur Schluessel aus dieser Konfiguration gelten, keine
+    # ~/.ssh/authorized_keys. Auf timo lag dort ein alter RSA-Schluessel mit
+    # Root-Zugang, den niemand mehr auf dem Schirm hatte.
+    authorizedKeysInHomedir = false;
     settings = {
       PermitRootLogin = "prohibit-password";
       PasswordAuthentication = false;
