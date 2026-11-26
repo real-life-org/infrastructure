@@ -53,6 +53,10 @@ jobs:
             [ "$w" = "[]" ] || { echo "::error::Warnungen bei $host: $w"; exit 1; }
           done
       - name: Stand von nixpkgs pruefen
+        env:
+          # angemeldet abfragen: anonym teilen sich die Runner ein knappes
+          # Limit der GitHub-API und bekommen 403
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           ref=$(jq -r '.nodes.nixpkgs.original.ref' flake.lock)
@@ -61,7 +65,8 @@ jobs:
           echo "nixpkgs: $ref, Stand vor $alter Tagen"
           # Gepflegt ist ein Release-Zweig, dessen Kopf in den letzten 30 Tagen
           # noch Commits bekommen hat (eingestellte Zweige frieren ein).
-          kopf=$(curl -fsS "https://api.github.com/repos/NixOS/nixpkgs/commits/$ref" | jq -r '.commit.committer.date')
+          kopf=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/NixOS/nixpkgs/commits/$ref" | jq -r '.commit.committer.date')
           kopf_alter=$(( ($(date +%s) - $(date -d "$kopf" +%s)) / 86400 ))
           echo "Zweig $ref: letzter Commit vor $kopf_alter Tagen"
           [ "$kopf_alter" -le 30 ] || { echo "::error::$ref wird nicht mehr gepflegt; auf die aktuelle NixOS-Version umstellen"; exit 1; }
