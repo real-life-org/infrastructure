@@ -59,5 +59,46 @@
   systemd.tmpfiles.rules = [
     "d /var/lib/secrets 0700 root root -"
     "d /var/lib/wot-release-docker 0700 wot-release wot-release -"
+    # Lesbar fuer alle: Caddy haengt das Verzeichnis nur lesend ein.
+    "d /srv/artifacts 0755 artifacts artifacts -"
   ];
+
+  # Spiegel der Claude-Artefakte (Anton, 26.11.2026): Jede Seite, die
+  # Anton ueber Claude veroeffentlicht, kommt per rsync hierher und wird
+  # von Caddy statisch ausgeliefert. Der Schluessel liegt ohne Passphrase
+  # auf Antons Laptop (ein Hook hat keinen Finger), darf deshalb nur
+  # schreiben, nur in /srv/artifacts und nichts loeschen. Eigener Nutzer
+  # ohne docker-Gruppe: ein gestohlener Schluessel legt Dateien ab, mehr nicht.
+  users.users.artifacts = {
+    isSystemUser = true;
+    group = "artifacts";
+    home = "/srv/artifacts";
+    # sshd startet das erzwungene Kommando ueber die Login-Shell; mit
+    # nologin (Vorgabe fuer Systemnutzer) liefe nichts.
+    useDefaultShell = true;
+    openssh.authorizedKeys.keys = [
+      "command=\"/etc/ssh/rsync-artifacts.sh\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBAQjwrkW7rO2r/Cr7csvirFr//em9w6McR6K0nGN8Yw artifact-mirror"
+    ];
+  };
+  users.groups.artifacts = { };
+
+  environment.etc."ssh/rsync-artifacts.sh" = {
+    mode = "0755";
+    text = ''
+      #!/bin/sh
+      case "$SSH_ORIGINAL_COMMAND" in
+          "rsync --server --sender "*)
+              echo "Nur schreiben erlaubt."
+              exit 1
+              ;;
+          "rsync --server "*)
+              exec ${pkgs.rrsync}/bin/rrsync -wo -no-del /srv/artifacts
+              ;;
+          *)
+              echo "Nur rsync erlaubt: rsync seite.html artifacts@<host>:"
+              exit 1
+              ;;
+      esac
+    '';
+  };
 }
