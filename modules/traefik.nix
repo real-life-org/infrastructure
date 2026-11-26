@@ -17,7 +17,7 @@ in
   config = {
     # Traefik: Docker-native reverse proxy with auto-SSL
     virtualisation.oci-containers.containers.traefik = {
-      image = "traefik:v3.3";
+      image = "traefik:v3.8.0";   # ab v3.6 mit Docker 29 vertraeglich
       cmd = [
         "--providers.docker=true"
         "--providers.docker.exposedbydefault=false"
