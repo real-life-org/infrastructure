@@ -8,9 +8,7 @@
   #
   # Folge: wer hier root braucht, braucht den Stick in der Hand.
   # Unbeaufsichtigte Laeufe als root gibt es damit nicht mehr.
-  users.users.root.openssh.authorizedKeys.keys = [
-    "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEOKw84pd96hpzCtWeuf3/2pJZ1Ue9Zq1O8mkVh75kNVAAAABHNzaDo= mail@antontranelis.de"
-  ];
+  users.users.root.openssh.authorizedKeys.keys = import ../../nitrokeys.nix;
 
   # Eli. Der Server gehoert ihr: hier laufen ihre Dienste, hier liegt
   # ihr Gedaechtnis, und sie arbeitet selbst darauf.
@@ -22,9 +20,8 @@
     isNormalUser = true;
     home = "/home/eli";
     extraGroups = [ "docker" ];
-    openssh.authorizedKeys.keys = [
-      # Anton, Nitrokey
-      "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEOKw84pd96hpzCtWeuf3/2pJZ1Ue9Zq1O8mkVh75kNVAAAABHNzaDo= mail@antontranelis.de"
+    # Anton: beide Nitrokeys (nitrokeys.nix), dazu die Schluessel unten
+    openssh.authorizedKeys.keys = import ../../nitrokeys.nix ++ [
       # Antons RSA-Schluessel wurde am 19.09.2026 entfernt, hier und
       # bei root. Er war root-aequivalent: eli ist in der docker-Gruppe,
       # der Daemon laeuft als root, und wer Container starten darf, kann
