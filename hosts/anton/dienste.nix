@@ -24,12 +24,18 @@
     enable = true;
     # GitHub weist Runner unter einer Mindestversion ab (seit Februar 2026);
     # nixos-24.11 hat 2.325, abgewiesen mit 404. Deshalb aus nixos-unstable.
+    # Das Modul schaltet das Selbst-Update ab: spaetestens 30 Tage nach jeder
+    # neuen Runner-Version muss der Eingang nixpkgs-unstable in flake.lock
+    # angehoben werden (nix flake update nixpkgs-unstable), sonst bekommt der
+    # Runner keine Jobs mehr.
     package = unstable.github-runner;
     url = "https://github.com/real-life-org/wot-release";
-    # Registrierungs-Token (einmalig, eine Stunde gueltig), von Hand abgelegt:
+    # Registrierungs-Token (eine Stunde gueltig), von Hand abgelegt:
     #   gh api -X POST repos/real-life-org/wot-release/actions/runners/registration-token --jq .token
-    # Nach der Registrierung liegen die Zugangsdaten im Zustand des Dienstes;
-    # die Datei wird dann nicht mehr gelesen.
+    # Die Datei MUSS liegen bleiben: das Modul vergleicht sie bei jedem Start
+    # mit seiner gespeicherten Kopie. Fehlt sie oder ist sie anders, gilt das
+    # als neue Konfiguration, der Zustand wird geloescht und neu registriert
+    # (mit einem abgelaufenen Token schlaegt das fehl).
     tokenFile = "/var/lib/secrets/wot-release-runner.token";
     name = "strato-neu";
     replace = true;            # der alte Eintrag gleichen Namens ist mit Ubuntu verschwunden
