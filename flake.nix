@@ -3,9 +3,12 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    # Nur fuer einzelne Pakete, die GitHub oder andere Dienste in neuer
+    # Version verlangen (GitHub-Runner: Mindestversion seit Februar 2026).
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, nixpkgs, ... }: {
+  outputs = { self, nixpkgs, nixpkgs-unstable, ... }: {
     nixosModules = {
       base = import ./modules/base.nix;
       docker = import ./modules/docker.nix;
@@ -49,6 +52,7 @@
       # beschaedigen kann.
       anton = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
+        specialArgs.unstable = nixpkgs-unstable.legacyPackages.x86_64-linux;
         modules = [
           ./hosts/anton/hardware-configuration.nix
           ./hosts/anton/default.nix

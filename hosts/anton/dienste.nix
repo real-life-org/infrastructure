@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, unstable, ... }:
 {
   # Signierdienst der Apps (Repo real-life-org/wot-release, privat).
   #
@@ -22,6 +22,9 @@
 
   services.github-runners.wot-release = {
     enable = true;
+    # GitHub weist Runner unter einer Mindestversion ab (seit Februar 2026);
+    # nixos-24.11 hat 2.325, abgewiesen mit 404. Deshalb aus nixos-unstable.
+    package = unstable.github-runner;
     url = "https://github.com/real-life-org/wot-release";
     # Registrierungs-Token (einmalig, eine Stunde gueltig), von Hand abgelegt:
     #   gh api -X POST repos/real-life-org/wot-release/actions/runners/registration-token --jq .token
