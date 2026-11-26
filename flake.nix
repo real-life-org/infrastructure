@@ -53,6 +53,7 @@
           ./hosts/anton/hardware-configuration.nix
           ./hosts/anton/default.nix
           ./hosts/anton/netz.nix
+          ./hosts/anton/dienste.nix
           ./modules/base.nix
           ./modules/docker.nix
         ];
